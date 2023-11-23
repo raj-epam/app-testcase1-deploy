@@ -3,13 +3,14 @@
 # Declare variables to be passed into your templates.
 namespace: nginx-qa
 replicaCount: 2
-
+app_name: nginx
 image:
   repository: nginx
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
-
+Labels: 
+   environment: dev
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
