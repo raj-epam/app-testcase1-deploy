@@ -126,7 +126,7 @@ pipeline {
                         }
                     }
                     stage('QA Manifest Rollback Approval') {//Manifest Rollback Approve for QA Env Values
-                    when { expression { qa_stage_run != true } }
+                    when { expression { qa_stage_run == true } }
                         steps {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             timeout(time: 100, unit: "MINUTES") {
