@@ -1,3 +1,6 @@
+def qa_stage_run=false
+
+
 pipeline {
 
     agent any
@@ -39,10 +42,19 @@ pipeline {
                         steps {
                         dir("deployments/dev-env")
                         {  
-                            sh "helm template  ../../core-template/core-template -f values.yaml > resources-dev.yaml"          
+                            sh "helm template  ../../core-template/core-template -f values.yaml > resources-dev.yaml"                          
+                        }
+                        }
+                    }
+                    stage('Dev Manifest Display') {//Manifest Scan for Dev Env Values
+                        steps {
+                        dir("deployments/dev-env")
+                        {  
                             echo "-------------------*******Manifest Display*******-------------------"    
                             sh "cat resources-dev.yaml"       
-                            echo "-------------------*******Manifest Display End*******-------------------"                     
+                            echo "-------------------*******Manifest Display End*******-------------------"       
+                            // echo "Manifest scan"      
+                            // sh "kubectl score score resources-dev.yaml"
                         }
                         }
                     }
@@ -65,7 +77,7 @@ pipeline {
                                     input message: 'Do you want to approve the deployment?', ok: 'Yes'
                                 }
 	                            echo "Initiating Rollback"
-	                            sh "kubectl rollback deployment nginx -n nginx-dev"
+	                            echo "kubectl rollback deployment app-name"
                             }
                         }
                     }
@@ -79,10 +91,19 @@ pipeline {
                         steps {
                         dir("deployments/qa-env")
                         {  
-                            sh "helm template  ../../core-template/core-template -f values.yaml > resources-qa.yaml" 
+                            sh "helm template  ../../core-template/core-template -f values.yaml > resources-qa.yaml"                          
+                        }
+                        }
+                    }
+                    stage('QA Manifest Display') {//Manifest Scan for QA Env Values
+                        steps {
+                        dir("deployments/qa-env")
+                        {  
                             echo "-------------------*******Manifest Display*******-------------------"    
                             sh "cat resources-qa.yaml"       
-                            echo "-------------------*******Manifest Display End*******-------------------"                         
+                            echo "-------------------*******Manifest Display End*******-------------------"       
+                            // echo "Manifest scan"    
+                            // sh "kube-score score resources-qa.yaml"
                         }
                         }
                     }
@@ -101,17 +122,18 @@ pipeline {
                             sh "az aks get-credentials --resource-group dhl_awow_demo --name dhl-awow-demo-cluster --admin"
                             sh "kubectl apply -f resources-qa.yaml"                            
                         }
+                        script { qa_stage_run = true }
                         }
                     }
-
                     stage('QA Manifest Rollback Approval') {//Manifest Rollback Approve for QA Env Values
+                    when { expression { qa_stage_run != true } }
                         steps {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             timeout(time: 100, unit: "MINUTES") {
 	                            input message: 'Do you want to approve the deployment?', ok: 'Yes'
 	                        }
 			                echo "Initiating Rollback"
-                            sh "kubectl rollback deployment nginx -n nginx-qa"
+                            echo "kubectl rollback deployment app-name"
                             }
                         }
                     }
